@@ -48,10 +48,19 @@ func NextDateSimple(now time.Time, startDate string, repeat string) (string, err
 		// Делаем один шаг на год
 		next = next.AddDate(1, 0, 0)
 		log.Printf("NextDateSimple: после первого шага 'y', next=%v\n", next)
+		// Корректируем високосный 29 февраля
+		if next.Day() == 29 && next.Month() == time.February && !isLeapYear(next.Year()) {
+			next = time.Date(next.Year(), time.March, 1, 0, 0, 0, 0, time.UTC)
+			log.Printf("NextDateSimple: корректировка високосного года, next=%v\n", next)
+		}
 		// Если результат меньше или равен now, продолжаем итерацию
 		for next.Before(now) || next.Equal(now) {
 			log.Printf("NextDateSimple: next=%v меньше или равен now=%v, делаем шаг\n", next, now)
 			next = next.AddDate(1, 0, 0)
+			if next.Day() == 29 && next.Month() == time.February && !isLeapYear(next.Year()) {
+				next = time.Date(next.Year(), time.March, 1, 0, 0, 0, 0, time.UTC)
+				log.Printf("NextDateSimple: корректировка високосного года в цикле, next=%v\n", next)
+			}
 		}
 		log.Printf("NextDateSimple: итоговая дата для 'y', next=%v\n", next)
 		return next.Format("20060102"), nil
@@ -158,6 +167,11 @@ func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	case RepeatYearly:
 		nextDate = currentDate.AddDate(1, 0, 0)
 		log.Printf("doneTaskHandler: шаг 'y' для id=%s, nextDate=%v\n", id, nextDate)
+		// Корректируем високосный 29 февраля
+		if nextDate.Day() == 29 && nextDate.Month() == time.February && !isLeapYear(nextDate.Year()) {
+			nextDate = time.Date(nextDate.Year(), time.March, 1, 0, 0, 0, 0, time.UTC)
+			log.Printf("doneTaskHandler: корректировка високосного года для id=%s, nextDate=%v\n", id, nextDate)
+		}
 
 	case RepeatDaily:
 		if len(parts) < 2 {
